@@ -25,9 +25,7 @@ class MoviesPageView extends Component {
     const { query } = this.state;
 
     if (prevState.query !== query) {
-      console.log(query);
       const response = await fetchSearchedMovies(query);
-      console.log(response);
       this.setState({ searchedMovies: response });
     }
   }

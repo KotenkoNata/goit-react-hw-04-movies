@@ -1,41 +1,74 @@
-import axios from 'axios';
-import React, { Component } from 'react';
-import routes from '../routes';
+import React, { Component, Suspense, lazy } from 'react';
+import { Route } from 'react-router-dom';
 
-import fetchMovieDetails from '../services/moviesApi';
+import {
+  fetchMovie,
+  fetchMovieCredits,
+  fetchMovieReviews,
+} from '../services/moviesApi';
+import _ from 'lodash';
+import MovieCard from '../components/MovieCard';
+import Button from '../components/Button';
+import DetailedInfoBar from '../components/DetailedInfoBar';
+import Section from '../components/Section';
 
-const API_KEY = process.env.REACT_APP_API_KEY;
-const BASE_URL = 'https://api.themoviedb.org/3';
+const Cast = lazy(() =>
+  import('../components/Cast' /* webpackChunkName: "cast-section" */),
+);
+
+const Reviews = lazy(() =>
+  import('../components/Review' /* webpackChunkName: "reviews-section" */),
+);
 
 class MovieDetailsPageView extends Component {
   state = {
-    overview: null,
-    genres: null,
-    id: null,
-    backdrop_path: null,
-    original_title: null,
-    popularity: null,
+    movie: null,
+    cast: null,
+    reviews: null,
   };
 
   async componentDidMount() {
     const { movieId } = this.props.match.params;
-    const movie = await axios.get(`${BASE_URL}/movie/5?api_key=${API_KEY}`);
+    const movie = await fetchMovie(movieId);
+    const cast = await fetchMovieCredits(movieId);
+    const review = await fetchMovieReviews(movieId);
 
-    console.log(movie.data);
-
-    this.setState({ ...movie });
+    this.setState({ movie, cast, review });
   }
 
   render() {
-    return (
-      <>
-        <div>
-          <h2>{this.state.original_title}</h2>
-          <img src={this.state.backdrop_path} alt='' />
-          <p>{this.state.overview}</p>
-        </div>
-      </>
-    );
+    const { movie, reviews, cast } = this.state;
+    const { url, path } = this.props.match;
+    const { location, history } = this.props;
+
+    if (movie) {
+      return (
+        <Section>
+          <MovieCard movie={movie} />
+          <Button location={location} history={history} />
+          <DetailedInfoBar url={url} location={location} />
+
+          <Suspense fallback={<h1>Loading...</h1>}>
+            <Route
+              path={`${path}/cast`}
+              render={props => <Cast {...props} cast={cast} />}
+            />
+            <Route
+              path={`${path}/reviews`}
+              render={props =>
+                !_.isEmpty(reviews) ? (
+                  <Reviews {...props} reviews={reviews} />
+                ) : (
+                  <p className='no-reviews'>No reviews.</p>
+                )
+              }
+            />
+          </Suspense>
+        </Section>
+      );
+    } else {
+      return null;
+    }
   }
 }
 

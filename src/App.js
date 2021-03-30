@@ -4,6 +4,8 @@ import { Route, Switch } from 'react-router-dom';
 import AppBar from './components/AppBar';
 import routes from './routes';
 
+import NotFoundView from './views/NotFoundView';
+
 const HomeView = lazy(() =>
   import('./views/HomeView.js' /*webpackChunkName: "home-view" */),
 );
@@ -26,7 +28,7 @@ const App = () => (
         <Route exact path={routes.home} component={HomeView} />
         <Route exact path={routes.moviesPage} component={MoviesPageView} />
         <Route path={routes.movieDetails} component={MovieDetailsPageView} />
-        {/* <Route component={NotFoundView} /> */}
+        <Route component={NotFoundView} />
       </Switch>
     </Suspense>
   </Container>
